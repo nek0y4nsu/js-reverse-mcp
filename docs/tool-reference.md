@@ -57,7 +57,7 @@
 
 ### `navigate_page`
 
-**Description:** Navigates the currently selected page to a URL, or performs back/forward/reload navigation. Waits for DOMContentLoaded event (not full page load). Default timeout is 10 seconds. After navigation, the debugger is reinitialized: stale script IDs are cleared, and any previously set breakpoints are automatically restored.
+**Description:** Navigates the currently selected page to a URL, or performs back/forward/reload navigation. Waits for DOMContentLoaded event (not full page load). Default timeout is 10 seconds. After navigation, stale script IDs are cleared and fresh ones are captured automatically. All breakpoints (URL, XHR, DOM) are preserved across navigation.
 
 **Parameters:**
 

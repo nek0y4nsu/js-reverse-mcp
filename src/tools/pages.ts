@@ -80,7 +80,7 @@ export const newPage = defineTool({
 
 export const navigatePage = defineTool({
   name: 'navigate_page',
-  description: `Navigates the currently selected page to a URL, or performs back/forward/reload navigation. Waits for DOMContentLoaded event (not full page load). Default timeout is 10 seconds. After navigation, the debugger is reinitialized: stale script IDs are cleared, and any previously set breakpoints are automatically restored.`,
+  description: `Navigates the currently selected page to a URL, or performs back/forward/reload navigation. Waits for DOMContentLoaded event (not full page load). Default timeout is 10 seconds. After navigation, stale script IDs are cleared and fresh ones are captured automatically. All breakpoints (URL, XHR, DOM) are preserved across navigation.`,
   annotations: {
     category: ToolCategory.NAVIGATION,
     readOnlyHint: false,
@@ -124,6 +124,16 @@ export const navigatePage = defineTool({
       }
     }
 
+    // Clear stale script IDs BEFORE navigation. The scriptParsed listener
+    // remains active and will capture new scripts as the page loads.
+    // We intentionally do NOT call reinitDebugger() here — that would send
+    // Debugger.disable which wipes ALL breakpoints (URL, XHR, DOM) and
+    // implicitly resumes paused state. clearScripts() only clears cached
+    // script IDs without touching the debugger or breakpoints.
+    if (debugger_.isEnabled()) {
+      debugger_.clearScripts();
+    }
+
     // Use plain navigation without waitForEventsAfterAction to avoid creating
     // a CDP session during navigation. Anti-bot systems detect the extra
     // CDP session that WaitForHelper creates (Page.frameStartedNavigating listener).
@@ -138,14 +148,10 @@ export const navigatePage = defineTool({
             waitUntil: 'domcontentloaded',
             referer: DEFAULT_REFERER,
           });
-          await context.reinitDebugger();
           response.appendResponseLine(
             `Successfully navigated to ${request.params.url}.`,
           );
         } catch (error) {
-          // Reinitialize debugger even on timeout — old scripts are already
-          // invalid and breakpoints need restoring for the new document.
-          await context.reinitDebugger();
           if (debugger_.isPaused()) {
             response.appendResponseLine(
               `Navigation to ${request.params.url} started but execution is paused at a breakpoint. Use get_paused_info to inspect, then resume to continue loading.`,
@@ -163,12 +169,10 @@ export const navigatePage = defineTool({
             ...options,
             waitUntil: 'domcontentloaded',
           });
-          await context.reinitDebugger();
           response.appendResponseLine(
             `Successfully navigated back to ${page.url()}.`,
           );
         } catch (error) {
-          await context.reinitDebugger();
           if (debugger_.isPaused()) {
             response.appendResponseLine(
               `Navigation back started but execution is paused at a breakpoint. Use get_paused_info to inspect, then resume to continue loading.`,
@@ -186,12 +190,10 @@ export const navigatePage = defineTool({
             ...options,
             waitUntil: 'domcontentloaded',
           });
-          await context.reinitDebugger();
           response.appendResponseLine(
             `Successfully navigated forward to ${page.url()}.`,
           );
         } catch (error) {
-          await context.reinitDebugger();
           if (debugger_.isPaused()) {
             response.appendResponseLine(
               `Navigation forward started but execution is paused at a breakpoint. Use get_paused_info to inspect, then resume to continue loading.`,
@@ -217,10 +219,8 @@ export const navigatePage = defineTool({
               waitUntil: 'domcontentloaded',
             });
           }
-          await context.reinitDebugger();
           response.appendResponseLine(`Successfully reloaded the page.`);
         } catch (error) {
-          await context.reinitDebugger();
           if (debugger_.isPaused()) {
             response.appendResponseLine(
               `Page reload started but execution is paused at a breakpoint. Use get_paused_info to inspect, then resume to continue loading.`,
