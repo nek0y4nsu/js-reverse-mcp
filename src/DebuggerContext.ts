@@ -497,6 +497,37 @@ export class DebuggerContext {
   }
 
   /**
+   * Get the source code of a script by URL.
+   * Resolves URL to the most recent scriptId and returns both source and script info.
+   */
+  async getScriptSourceByUrl(
+    url: string,
+  ): Promise<{source: string; script: ScriptInfo}> {
+    if (!this.#client) {
+      throw new Error('Debugger not enabled');
+    }
+
+    // Try exact match first
+    let scripts = this.getScriptsByUrl(url);
+
+    // Fall back to substring match
+    if (scripts.length === 0) {
+      scripts = this.getScriptsByUrlPattern(url);
+    }
+
+    if (scripts.length === 0) {
+      throw new Error(
+        `No script found matching URL "${url}". Use list_scripts to see available scripts.`,
+      );
+    }
+
+    // Pick the last script (most recent parse)
+    const script = scripts[scripts.length - 1];
+    const source = await this.getScriptSource(script.scriptId);
+    return {source, script};
+  }
+
+  /**
    * Get the source code of a script.
    */
   async getScriptSource(scriptId: string): Promise<string> {

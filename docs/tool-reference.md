@@ -21,7 +21,7 @@
   - [`list_frames`](#list_frames)
   - [`select_frame`](#select_frame)
   - [`take_screenshot`](#take_screenshot)
-- **[JS Reverse Engineering](#js-reverse-engineering)** (22 tools)
+- **[JS Reverse Engineering](#js-reverse-engineering)** (19 tools)
   - [`break_on_xhr`](#break_on_xhr)
   - [`get_paused_info`](#get_paused_info)
   - [`get_request_initiator`](#get_request_initiator)
@@ -271,15 +271,16 @@ so returned values have to JSON-serializable. When execution is paused at a brea
 
 ### `get_script_source`
 
-**Description:** Gets the source code of a JavaScript script by its script ID. Supports line range (for normal files) or character offset (for minified single-line files). Use [`list_scripts`](#list_scripts) first to find the script ID. After page navigation, old script IDs become invalid — call [`list_scripts`](#list_scripts) again to get fresh IDs.
+**Description:** Gets the source code of a JavaScript script by URL (recommended) or script ID. Supports line range (for normal files) or character offset (for minified single-line files). Prefer using url over scriptId — URLs remain stable across page navigations while script IDs become invalid after reload.
 
 **Parameters:**
 
 - **endLine** (integer) _(optional)_: End line number (1-based). Use for multi-line files.
 - **length** (integer) _(optional)_: Number of characters to return when using offset (default: 1000).
 - **offset** (integer) _(optional)_: Character offset to start from (0-based). Use for minified single-line files.
-- **scriptId** (string) **(required)**: The script ID (from [`list_scripts`](#list_scripts)) to get the source code for.
+- **scriptId** (string) _(optional)_: Script ID (from [`list_scripts`](#list_scripts)). Becomes invalid after page navigation — prefer url instead.
 - **startLine** (integer) _(optional)_: Start line number (1-based). Use for multi-line files.
+- **url** (string) _(optional)_: Script URL (preferred). Stable across page navigations. Exact match first, then substring match.
 
 ---
 

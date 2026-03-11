@@ -85,17 +85,24 @@ export const listScripts = defineTool({
 export const getScriptSource = defineTool({
   name: 'get_script_source',
   description:
-    'Gets the source code of a JavaScript script by its script ID. Supports line range (for normal files) or character offset (for minified single-line files). Use list_scripts first to find the script ID. After page navigation, old script IDs become invalid — call list_scripts again to get fresh IDs.',
+    'Gets the source code of a JavaScript script by URL (recommended) or script ID. Supports line range (for normal files) or character offset (for minified single-line files). Prefer using url over scriptId — URLs remain stable across page navigations while script IDs become invalid after reload.',
   annotations: {
     title: 'Get Script Source',
     category: ToolCategory.REVERSE_ENGINEERING,
     readOnlyHint: true,
   },
   schema: {
+    url: zod
+      .string()
+      .optional()
+      .describe(
+        'Script URL (preferred). Stable across page navigations. Exact match first, then substring match.',
+      ),
     scriptId: zod
       .string()
+      .optional()
       .describe(
-        'The script ID (from list_scripts) to get the source code for.',
+        'Script ID (from list_scripts). Becomes invalid after page navigation — prefer url instead.',
       ),
     startLine: zod
       .number()
@@ -133,10 +140,28 @@ export const getScriptSource = defineTool({
       return;
     }
 
-    const {scriptId, startLine, endLine, offset, length} = request.params;
+    const {url, startLine, endLine, offset, length} = request.params;
+    let {scriptId} = request.params;
+
+    if (!url && !scriptId) {
+      response.appendResponseLine(
+        'Either url or scriptId must be provided.',
+      );
+      return;
+    }
 
     try {
-      const source = await debugger_.getScriptSource(scriptId);
+      let source: string;
+      if (url) {
+        const result = await debugger_.getScriptSourceByUrl(url);
+        source = result.source;
+        scriptId = result.script.scriptId;
+        response.appendResponseLine(
+          `Resolved URL to script ${scriptId} (${result.script.url}).\n`,
+        );
+      } else {
+        source = await debugger_.getScriptSource(scriptId!);
+      }
 
       if (!source) {
         response.appendResponseLine(`No source found for script ${scriptId}.`);
@@ -393,7 +418,7 @@ export const searchInSources = defineTool({
 
       response.appendResponseLine('---');
       response.appendResponseLine(
-        'Tip: Use get_script_source(scriptId, startLine, endLine) to view full context around a match.',
+        'Tip: Use get_script_source(url=..., startLine, endLine) to view full context around a match. Using url is preferred over scriptId as it stays valid across page navigations.',
       );
     } catch (error) {
       response.appendResponseLine(

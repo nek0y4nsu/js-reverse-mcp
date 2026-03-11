@@ -151,6 +151,9 @@ export const navigatePage = defineTool({
           response.appendResponseLine(
             `Successfully navigated to ${request.params.url}.`,
           );
+          response.appendResponseLine(
+            'Note: Any previously obtained script IDs are now invalid. Use script URLs instead.',
+          );
         } catch (error) {
           if (debugger_.isPaused()) {
             response.appendResponseLine(
@@ -172,6 +175,9 @@ export const navigatePage = defineTool({
           response.appendResponseLine(
             `Successfully navigated back to ${page.url()}.`,
           );
+          response.appendResponseLine(
+            'Note: Any previously obtained script IDs are now invalid. Use script URLs instead.',
+          );
         } catch (error) {
           if (debugger_.isPaused()) {
             response.appendResponseLine(
@@ -192,6 +198,9 @@ export const navigatePage = defineTool({
           });
           response.appendResponseLine(
             `Successfully navigated forward to ${page.url()}.`,
+          );
+          response.appendResponseLine(
+            'Note: Any previously obtained script IDs are now invalid. Use script URLs instead.',
           );
         } catch (error) {
           if (debugger_.isPaused()) {
@@ -220,6 +229,9 @@ export const navigatePage = defineTool({
             });
           }
           response.appendResponseLine(`Successfully reloaded the page.`);
+          response.appendResponseLine(
+            'Note: Any previously obtained script IDs are now invalid. Use script URLs instead.',
+          );
         } catch (error) {
           if (debugger_.isPaused()) {
             response.appendResponseLine(
