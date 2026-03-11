@@ -395,7 +395,7 @@ export const searchInSources = defineTool({
       .optional()
       .default(150)
       .describe(
-        'Maximum characters per line preview (default: 150). Set to 0 for full lines.',
+        'Maximum characters per matched line preview (default: 150). Increase if you need more context around the match.',
       ),
     excludeMinified: zod
       .boolean()
@@ -497,7 +497,8 @@ export const searchInSources = defineTool({
 
         // Truncate line content, centering around the match if possible
         let preview = match.lineContent.trim();
-        if (maxLineLength > 0 && preview.length > maxLineLength) {
+        const effectiveMaxLen = maxLineLength > 0 ? maxLineLength : 500;
+        if (preview.length > effectiveMaxLen) {
           // Try to find the query position to center the preview
           const lowerContent = caseSensitive ? preview : preview.toLowerCase();
           const lowerQuery = caseSensitive ? query : query.toLowerCase();
@@ -505,13 +506,13 @@ export const searchInSources = defineTool({
 
           if (matchPos >= 0) {
             // Center around match position
-            const halfLen = Math.floor(maxLineLength / 2);
+            const halfLen = Math.floor(effectiveMaxLen / 2);
             let start = Math.max(0, matchPos - halfLen);
-            let end = start + maxLineLength;
+            let end = start + effectiveMaxLen;
 
             if (end > preview.length) {
               end = preview.length;
-              start = Math.max(0, end - maxLineLength);
+              start = Math.max(0, end - effectiveMaxLen);
             }
 
             const prefix = start > 0 ? '...' : '';
@@ -519,7 +520,7 @@ export const searchInSources = defineTool({
             preview = prefix + preview.substring(start, end) + suffix;
           } else {
             // Fallback: truncate from start
-            preview = preview.substring(0, maxLineLength) + '...';
+            preview = preview.substring(0, effectiveMaxLen) + '...';
           }
         }
 
