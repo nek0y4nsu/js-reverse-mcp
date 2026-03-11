@@ -45,8 +45,10 @@ const logFile = args.logFile ? saveLogsToFile(args.logFile) : undefined;
 logger(`Starting Chrome DevTools MCP Server v${VERSION}`);
 const server = new McpServer(
   {
-    name: 'chrome_devtools',
-    title: 'Chrome DevTools MCP server',
+    name: 'js-reverse',
+    title: 'JS Reverse Engineering MCP Server',
+    description:
+      'JavaScript reverse engineering and debugging via Chrome DevTools. Built on Patchright anti-detection engine — passes mainstream browser fingerprint checks (Zhihu, Google, etc.) out of the box.',
     version: VERSION,
   },
   {capabilities: {logging: {}}},

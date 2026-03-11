@@ -21,21 +21,17 @@
   - [`list_frames`](#list_frames)
   - [`select_frame`](#select_frame)
   - [`take_screenshot`](#take_screenshot)
-- **[JS Reverse Engineering](#js-reverse-engineering)** (26 tools)
+- **[JS Reverse Engineering](#js-reverse-engineering)** (20 tools)
   - [`break_on_xhr`](#break_on_xhr)
   - [`evaluate_on_callframe`](#evaluate_on_callframe)
   - [`find_in_script`](#find_in_script)
   - [`get_paused_info`](#get_paused_info)
   - [`get_request_initiator`](#get_request_initiator)
   - [`get_script_source`](#get_script_source)
-  - [`get_storage`](#get_storage)
-  - [`hook_function`](#hook_function)
-  - [`inspect_object`](#inspect_object)
   - [`list_breakpoints`](#list_breakpoints)
-  - [`list_hooks`](#list_hooks)
   - [`list_scripts`](#list_scripts)
-  - [`monitor_events`](#monitor_events)
   - [`pause`](#pause)
+  - [`remove_all_breakpoints`](#remove_all_breakpoints)
   - [`remove_breakpoint`](#remove_breakpoint)
   - [`remove_xhr_breakpoint`](#remove_xhr_breakpoint)
   - [`resume`](#resume)
@@ -45,9 +41,7 @@
   - [`step_into`](#step_into)
   - [`step_out`](#step_out)
   - [`step_over`](#step_over)
-  - [`stop_monitor`](#stop_monitor)
   - [`trace_function`](#trace_function)
-  - [`unhook_function`](#unhook_function)
 
 ## Navigation automation
 
@@ -173,20 +167,19 @@
 ### `evaluate_script`
 
 **Description:** Evaluate a JavaScript function inside the currently selected page. Returns the response as JSON
-so returned values have to JSON-serializable.
+so returned values have to JSON-serializable. When execution is paused at a breakpoint, automatically evaluates in the paused call frame context.
 
 **Parameters:**
 
 - **function** (string) **(required)**: A JavaScript function declaration to be executed by the tool in the currently selected page.
-Example without arguments: `() => {
+  Example without arguments: `() => {
   return document.title
 }` or `async () => {
   return await fetch("example.com")
 }`.
-Example with arguments: `(el) => {
+  Example with arguments: `(el) => {
   return el.innerText;
 }`
-
 
 ---
 
@@ -223,7 +216,7 @@ Example with arguments: `(el) => {
 
 ### `select_frame`
 
-**Description:** Selects a frame (by index from [`list_frames`](#list_frames)) as the execution context for [`evaluate_script`](#evaluate_script), [`hook_function`](#hook_function), [`inspect_object`](#inspect_object), and other tools that run JavaScript in the page.
+**Description:** Selects a frame (by index from [`list_frames`](#list_frames)) as the execution context for [`evaluate_script`](#evaluate_script), hook_function, inspect_object, and other tools that run JavaScript in the page.
 
 **Parameters:**
 
@@ -316,55 +309,9 @@ Example with arguments: `(el) => {
 
 ---
 
-### `get_storage`
-
-**Description:** Gets browser storage data including cookies, localStorage, and sessionStorage.
-
-**Parameters:**
-
-- **filter** (string) _(optional)_: Optional filter string to match against keys/names.
-- **type** (enum: "all", "cookies", "localStorage", "sessionStorage") _(optional)_: Which storage to retrieve (default: all).
-
----
-
-### `hook_function`
-
-**Description:** Hooks a JavaScript function to log its calls, arguments, and return values. Useful for understanding how functions are used without setting breakpoints.
-
-**Parameters:**
-
-- **hookId** (string) _(optional)_: Custom identifier for this hook. Used to unhook later. Defaults to target name.
-- **logArgs** (boolean) _(optional)_: Whether to log function arguments (default: true).
-- **logResult** (boolean) _(optional)_: Whether to log return value (default: true).
-- **logStack** (boolean) _(optional)_: Whether to log call stack (default: false).
-- **target** (string) **(required)**: The function to hook. Can be: global function name ("fetch"), object method ("XMLHttpRequest.prototype.open"), or path ("window.app.api.request").
-
----
-
-### `inspect_object`
-
-**Description:** Deeply inspects a JavaScript object, showing its properties, prototype chain, and methods. Useful for understanding object structure.
-
-**Parameters:**
-
-- **depth** (integer) _(optional)_: How deep to inspect nested objects (default: 2).
-- **expression** (string) **(required)**: JavaScript expression to evaluate and inspect (e.g., "window.app", "document.body", "myObject").
-- **showMethods** (boolean) _(optional)_: Whether to show methods (default: true).
-- **showPrototype** (boolean) _(optional)_: Whether to show prototype chain (default: true).
-
----
-
 ### `list_breakpoints`
 
 **Description:** Lists all active breakpoints in the current debugging session.
-
-**Parameters:** None
-
----
-
-### `list_hooks`
-
-**Description:** Lists all active function hooks.
 
 **Parameters:** None
 
@@ -380,21 +327,17 @@ Example with arguments: `(el) => {
 
 ---
 
-### `monitor_events`
-
-**Description:** Monitors DOM events on a specified element or window. Events will be logged to console.
-
-**Parameters:**
-
-- **events** (array) _(optional)_: Specific events to monitor (e.g., ["click", "keydown"]). If not specified, monitors common events.
-- **monitorId** (string) _(optional)_: Custom ID for this monitor. Used to stop monitoring later.
-- **selector** (string) _(optional)_: CSS selector for element to monitor, or "window"/"document" (default: window).
-
----
-
 ### `pause`
 
 **Description:** Pauses JavaScript execution at the current point. Use this to interrupt running code.
+
+**Parameters:** None
+
+---
+
+### `remove_all_breakpoints`
+
+**Description:** Removes all active breakpoints. Use this to clean up debugging state.
 
 **Parameters:** None
 
@@ -495,16 +438,6 @@ Example with arguments: `(el) => {
 
 ---
 
-### `stop_monitor`
-
-**Description:** Stops an event monitor.
-
-**Parameters:**
-
-- **monitorId** (string) **(required)**: The monitor ID to stop.
-
----
-
 ### `trace_function`
 
 **Description:** Traces calls to a function by its name in the source code. Works for ANY function including module-internal functions (webpack/rollup bundled). Uses "logpoints" (conditional breakpoints) to log arguments without pausing execution.
@@ -517,15 +450,5 @@ Example with arguments: `(el) => {
 - **pause** (boolean) _(optional)_: Whether to actually [`pause`](#pause) execution (default: false, just logs).
 - **traceId** (string) _(optional)_: Custom ID for this trace. Used to identify in logs.
 - **urlFilter** (string) _(optional)_: Only search in scripts matching this URL pattern.
-
----
-
-### `unhook_function`
-
-**Description:** Removes a previously installed function hook.
-
-**Parameters:**
-
-- **hookId** (string) **(required)**: The hook ID to remove (from [`hook_function`](#hook_function)).
 
 ---

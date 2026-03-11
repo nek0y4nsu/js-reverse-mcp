@@ -1,7 +1,7 @@
 {
   "name": "js-reverse-mcp",
   "version": "1.0.0",
-  "description": "MCP server for JavaScript reverse engineering and debugging",
+  "description": "MCP server for JavaScript reverse engineering and debugging. Built on Patchright anti-detection engine, passes mainstream browser fingerprint checks out of the box.",
   "type": "module",
   "bin": "./build/src/index.js",
   "main": "index.js",
@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "format": "eslint --cache --fix . && prettier --write --cache .",
     "check-format": "eslint --cache . && prettier --check --cache .;",
-    "docs": "npm run build && npm run docs:generate && npm run format",
+    "docs": "npm run build && npm run docs:generate && prettier --write --cache docs/",
     "docs:generate": "node --experimental-strip-types scripts/generate-docs.ts",
     "start": "npm run build && node build/src/index.js",
     "start-debug": "DEBUG=mcp:* DEBUG_COLORS=false npm run build && node build/src/index.js",

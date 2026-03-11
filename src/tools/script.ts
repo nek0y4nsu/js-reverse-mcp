@@ -29,7 +29,7 @@ function withTimeout<T>(
 export const evaluateScript = defineTool({
   name: 'evaluate_script',
   description: `Evaluate a JavaScript function inside the currently selected page. Returns the response as JSON
-so returned values have to JSON-serializable.`,
+so returned values have to JSON-serializable. When execution is paused at a breakpoint, automatically evaluates in the paused call frame context.`,
   annotations: {
     category: ToolCategory.DEBUGGING,
     readOnlyHint: false,
@@ -49,6 +49,38 @@ Example with arguments: \`(el) => {
     ),
   },
   handler: async (request, response, context) => {
+    // When paused at a breakpoint, fallback to evaluate_on_callframe
+    // to avoid a 30s timeout that would confuse the agent.
+    const debugger_ = context.debuggerContext;
+    if (debugger_.isEnabled() && debugger_.isPaused()) {
+      const pausedState = debugger_.getPausedState();
+      const callFrameId = pausedState.callFrames[0]?.callFrameId;
+      if (callFrameId) {
+        const expression = `JSON.stringify(await (${request.params.function})())`;
+        const result = await debugger_.evaluateOnCallFrame(
+          callFrameId,
+          expression,
+          {returnByValue: true},
+        );
+
+        if (result.exceptionDetails) {
+          const errMsg =
+            result.exceptionDetails.exception?.description ||
+            result.exceptionDetails.text;
+          throw new Error(`Script evaluation error: ${errMsg}`);
+        }
+
+        const value = result.result.value as string | undefined;
+        response.appendResponseLine(
+          'Script ran on page (paused context) and returned:',
+        );
+        response.appendResponseLine('```json');
+        response.appendResponseLine(`${value ?? 'undefined'}`);
+        response.appendResponseLine('```');
+        return;
+      }
+    }
+
     let fn: JSHandle<unknown> | undefined;
     try {
       const frame = context.getSelectedFrame();
