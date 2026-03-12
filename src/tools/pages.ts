@@ -130,6 +130,10 @@ export const navigatePage = defineTool({
     // Debugger.disable which wipes ALL breakpoints (URL, XHR, DOM) and
     // implicitly resumes paused state. clearScripts() only clears cached
     // script IDs without touching the debugger or breakpoints.
+    //
+    // Note: Debugger.setBreakpointByUrl breakpoints survive navigation, but
+    // DOMDebugger XHR breakpoints are reset by Chrome on navigation — we
+    // restore them after navigation completes.
     if (debugger_.isEnabled()) {
       debugger_.clearScripts();
     }
@@ -244,6 +248,12 @@ export const navigatePage = defineTool({
           }
         }
         break;
+    }
+
+    // Restore XHR breakpoints after navigation — Chrome resets
+    // DOMDebugger state on page navigation.
+    if (debugger_.isEnabled()) {
+      await debugger_.restoreXHRBreakpoints();
     }
 
     response.setIncludePages(true);

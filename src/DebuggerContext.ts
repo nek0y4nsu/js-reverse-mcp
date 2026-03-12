@@ -128,6 +128,7 @@ export class DebuggerContext {
   #scripts = new Map<string, ScriptInfo>(); // scriptId -> info
   #urlToScripts = new Map<string, string[]>(); // url -> scriptId[]
   #breakpoints = new Map<string, BreakpointInfo>(); // breakpointId -> info
+  #xhrBreakpoints = new Set<string>(); // tracked XHR breakpoint URL patterns
   #enabled = false;
   #pausedState: PausedState = {isPaused: false, callFrames: []};
 
@@ -649,6 +650,54 @@ export class DebuggerContext {
         };
 
         this.#breakpoints.set(result.breakpointId, restoredInfo);
+      } catch {
+        // Skip breakpoints that fail to restore
+      }
+    }
+  }
+
+  // ==================== XHR Breakpoint Management ====================
+
+  /**
+   * Set an XHR/Fetch breakpoint and track it for restoration after navigation.
+   */
+  async setXHRBreakpoint(url: string): Promise<void> {
+    if (!this.#client) {
+      throw new Error('Debugger not enabled');
+    }
+    await this.#client.send('DOMDebugger.setXHRBreakpoint', {url});
+    this.#xhrBreakpoints.add(url);
+  }
+
+  /**
+   * Remove an XHR/Fetch breakpoint.
+   */
+  async removeXHRBreakpoint(url: string): Promise<void> {
+    if (!this.#client) {
+      throw new Error('Debugger not enabled');
+    }
+    await this.#client.send('DOMDebugger.removeXHRBreakpoint', {url});
+    this.#xhrBreakpoints.delete(url);
+  }
+
+  /**
+   * Get all tracked XHR breakpoint URL patterns.
+   */
+  getXHRBreakpoints(): string[] {
+    return Array.from(this.#xhrBreakpoints);
+  }
+
+  /**
+   * Re-set all XHR breakpoints via CDP.
+   * Called after navigation since Chrome resets DOMDebugger state.
+   */
+  async restoreXHRBreakpoints(): Promise<void> {
+    if (!this.#client) {
+      return;
+    }
+    for (const url of this.#xhrBreakpoints) {
+      try {
+        await this.#client.send('DOMDebugger.setXHRBreakpoint', {url});
       } catch {
         // Skip breakpoints that fail to restore
       }

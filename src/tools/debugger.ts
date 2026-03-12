@@ -1165,7 +1165,7 @@ export const breakOnXhr = defineTool({
     }
 
     try {
-      await client.send('DOMDebugger.setXHRBreakpoint', {url});
+      await debugger_.setXHRBreakpoint(url);
       response.appendResponseLine(
         `✅ XHR breakpoint set for URLs containing: "${url}"`,
       );
@@ -1205,15 +1205,9 @@ export const removeXhrBreakpoint = defineTool({
     }
 
     const {url} = request.params;
-    const client = debugger_.getClient();
-
-    if (!client) {
-      response.appendResponseLine('Debugger client not available.');
-      return;
-    }
 
     try {
-      await client.send('DOMDebugger.removeXHRBreakpoint', {url});
+      await debugger_.removeXHRBreakpoint(url);
       response.appendResponseLine(`✅ XHR breakpoint removed for: "${url}"`);
     } catch (error) {
       response.appendResponseLine(
