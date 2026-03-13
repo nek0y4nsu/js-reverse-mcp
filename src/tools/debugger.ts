@@ -1472,11 +1472,13 @@ export const injectBeforeLoad = defineTool({
     const {script} = request.params;
 
     try {
+      await client.send('Page.enable');
       const result = await client.send(
         'Page.addScriptToEvaluateOnNewDocument',
         {source: script},
       );
       const identifier = result.identifier;
+      context.trackInjectedScript(identifier, script);
       response.appendResponseLine(
         `Script injected. Identifier: ${identifier}`,
       );
@@ -1532,9 +1534,11 @@ export const removeInjectedScript = defineTool({
     const {identifier} = request.params;
 
     try {
+      await client.send('Page.enable');
       await client.send('Page.removeScriptToEvaluateOnNewDocument', {
         identifier,
       });
+      context.untrackInjectedScript(identifier);
       response.appendResponseLine(
         `Injected script ${identifier} removed.`,
       );

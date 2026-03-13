@@ -273,7 +273,7 @@ so returned values have to JSON-serializable. When execution is paused at a brea
 
 ### `get_script_source`
 
-**Description:** Gets the source code of a JavaScript script by URL (recommended) or script ID. Supports line range (for normal files) or character offset (for minified single-line files). Prefer using url over scriptId — URLs remain stable across page navigations while script IDs become invalid after reload.
+**Description:** Gets a small snippet of a JavaScript script source by URL (recommended) or script ID. Supports line range (for normal files) or character offset (for minified single-line files). Prefer using url over scriptId — URLs remain stable across page navigations while script IDs become invalid after reload. IMPORTANT: This tool is designed for reading small code regions (e.g. around breakpoints or search results). You MUST always specify startLine/endLine or offset/length. To read an entire script file, use curl to download it by its URL instead.
 
 **Parameters:**
 
